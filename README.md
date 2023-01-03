@@ -13,6 +13,7 @@ updates are part of the Linux kernel since v5.11 and are part of Scapy since v2.
 
 	# Use the following RadoTap flags for more reliable and correct frame injection
 	radiotap = RadioTap(present="TXFlags", TXFlags="NOSEQ+ORDER")
+
 	# Example frame injection using the above RadioTap header
 	dot11 = Dot11(addr1="00:11:22:33:44")/Dot11Deauth(reason=7)
 	sendp(radiotap/dot11)
