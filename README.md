@@ -158,7 +158,7 @@ Some known injection problems that have not yet been fixed are:
 - I haven't experimented with this yet, but it would be interesting to test if a network card
   in monitor mode might also reorder recieved frames that have a different QoS TID priority.
   If that would happen, our reorder tests may not be reliable, because it may be the _monitor_
-  interface that is reordering frames and not the interface that is _transmitting_frames!
+  interface that is reordering frames and not the interface that is _transmitting_ frames!
 
 
 <a id="id-prerequisites"></a>
