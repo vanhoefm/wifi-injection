@@ -1,6 +1,6 @@
 # <div align="center">Testing and Improving the Correctness of Wi-Fi Frame Injection</div>
 
-<a id="intro"></a>
+<a id="id-intro"></a>
 # 1. Introduction
 
 This repository contains a script to test the correctness of Wi-Fi frame injection. Summarized,
@@ -26,6 +26,9 @@ from Linux kernel 5.11 and above.
 Unfortunately, **drivers or network cards may still overwrite fields of injected Wi-Fi frames**.
 To test whether frames are properly injected, you can use the script in this repository.
 
+Be sure to also see our notes on the [acknowledgement behavior](#id-acks) of interfaces
+in monitor mode, and how to to inject frames with the [More Fragments (MF) flag](#id-more-fragments).
+
 For further details, see the our paper [**Testing and Improving the Correctness of Wi-Fi Frame Injection**](https://papers.mathyvanhoef.com/wisec2023-injection.pdf).
 If you are using our injection and RadioTap improvements, you can use the following BibTex entry
 to cite the paper:
@@ -41,7 +44,7 @@ to cite the paper:
 	}
 
 
-<a id="intro"></a>
+<a id="id-intro"></a>
 # 2. Common Injection Issues
 
 For details on issues with frame injection on Linux, see the our 6-page paper
@@ -76,6 +79,7 @@ mode, the term **non-monitor interface(s)** refers to the interfaces that are op
 in client or access point mode (or any other non-monitor mode).
 
 
+<a id="id-acks"></a>
 ## 2.2. Acknowledgements
 
 **Acknowledgements in pure monitor mode**: most network cards will not acknowledge frames
@@ -117,7 +121,43 @@ can then be used to monitor Wi-Fi traffic and to inject Wi-Fi frames. For more i
 on the `ap start` command see the [`start_ap` function in libwifi](https://github.com/vanhoefm/libwifi/blob/master/wifi.py).
 
 
-## 2.3. Other issues
+<a id="id-more-fragments"></a>
+## 2.3. More Fragments (MF) flag
+
+Some network cards, such as the the Intel AC-3160 and Alfa AWUS036ACM did not properly
+transmit injected frames with the More Fragments (MF) flag set. This can be solved by,
+after injecting the frame with the MF flag set, immediately injecting a dummy frame
+_witout_ the MF flag. With the AWUS036ACM, this dummy frame must also have the same QoS TID
+as the injected frame, but all other fields of the dummy frame did not matter.
+
+The above work-around is implemented in our injection tests. In particular, the driver
+of the network cards is detected, and the dummy frame is injected when needed:
+
+	# Workaround to properly inject fragmented frames (and prevent it from blocking Tx queue).
+	driver_out = get_device_driver(iface_out)
+	sout.mf_workaround = driver_out in ["iwlwifi", "ath9k_htc", "rt2800usb"]
+	if sout.mf_workaround:
+		log(WARNING, f"Detected {driver_out}, using workaround to reliably inject fragmented frames.")
+
+	...
+
+	# Note: this workaround for Intel is only needed if the fragmented frame is injected using
+	#       valid MAC addresses. But for simplicity just execute it after any fragmented frame.
+	if sout.mf_workaround and toinject.FCfield & Dot11(FCfield="MF").FCfield != 0:
+		fix = Dot11(type=p.type, subtype=p.subtype)
+		# Note: for the RT5572 the workaround is always needed. Additionally, we need to send
+		#       the dummy frame using the same QoS TID. Just use same QoD TID for all devices.
+		if Dot11QoS in p:
+			fix = fix/Dot11QoS(TID=p[Dot11QoS].TID)
+		sout.send(RadioTap(present="TXFlags", TXFlags="NOSEQ+ORDER")/fix)
+		log(STATUS, f"Sending dummy frame after injecting frame with MF flag set: {repr(fix)}")
+
+Summarized, when injecting frames with the More Fragments flag, you may have to implement
+a similar workaround where a dummy frame is injected aftwards (otherwise the frame with
+the MF flag may not be properly transmitted).
+
+
+## 2.4. Other issues
 
 - The order of injected frames may also be changed in both pure and mixed monitor mode.
   In particular, frames with different QoS TID values, i.e., with different priorities,
@@ -138,7 +178,7 @@ on the `ap start` command see the [`start_ap` function in libwifi](https://githu
 - For other examples see [our paper](https://papers.mathyvanhoef.com/wisec2023-injection.pdf).
 
 
-## 2.4. Open Problems
+## 2.5. Open Problems
 
 Some known injection problems that have not yet been fixed are:
 
@@ -153,7 +193,14 @@ Some known injection problems that have not yet been fixed are:
   [patched firmware](https://github.com/vanhoefm/fragattacks/tree/master/research/ath9k-firmware)
   to fix this injection issue.
 
-- The firmware of the Intel AX200 crashes when injecting fragmented frames.
+- The firmware of the Intel AX200 and Intel Tiger Lake PCH CNVi WiFi crashes when injecting
+  a frame with the More Fragments flag set. This happens in both pure and mixed monitor mode.
+
+- When putting the Intel Tiger Lake PCH CNVi WiFi into pure monitor mode, you have to wait roughly
+  30 seconds before it starts recieving frames. Switching back and forth between mixed managed
+  and pure monitor causes it not to receive frames at all in monitor mode. It cannot inject frames
+  in mixed monitor mode, at least before authentication. In pure monitor mode it was unable to
+  inject EAPOL frames and it overwrites the sequence and fragment number. Do not use this card.
 
 - I haven't experimented with this yet, but it would be interesting to test if a network card
   in monitor mode might also reorder recieved frames that have a different QoS TID priority.
@@ -185,7 +232,7 @@ be loaded. Pull in new code using:
 	git submodule update
 
 
-<a id="testing-injection"></a>
+<a id="id-testing-injection"></a>
 # 4. Testing Injection
 
 You should [disable Wi-Fi in your network manager](https://github.com/vanhoefm/libwifi/blob/master/docs/linux_tutorial.md#id-disable-wifi)
@@ -256,7 +303,15 @@ and frames are injected using the (newly created) `wlan0mon` monitor interface.
 The second command is similar but puts the `wlan0` interface in AP mode.
 
 
-## 4.3. Interpreting test results
+## 4.4. Mixed monitor mode injection during or after authentication
+
+Testing the correctness of frame injection in mixed monitor mode while a client
+is (or has been) authenticated to an AP is not supported by this script. To perform
+such tests, use the `--inject-test` and `--inject-test-postauth` parameters of the
+[FragAttacks](https://github.com/vanhoefm/fragattacks) testing script.
+
+
+## 4.5. Interpreting test results
 
 The test script will give detailed output on which tests succeeded or failed, and will
 conclude by outputting either `==> The most important tests have been passed successfully`
@@ -277,7 +332,7 @@ is not reliable and is, for example, missing most frames due to background noise
 running the tests on a different channel as well.
 
 
-## 4.4. Manual testing notes
+## 4.6. Manual testing notes
 
 When using wireshark to inspect the injection behaviour of a device it is recommended
 to use a second device in pure monitor mode to see how frames are being transmitted.

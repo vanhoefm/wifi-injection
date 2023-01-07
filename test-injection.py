@@ -16,6 +16,7 @@ def main():
 	parser.add_argument('--active', action='store_true', help="Put inject interface in active monitor mode.")
 	parser.add_argument('--ap', action='store_true', help="Add a virtual AP interface on the inject interface.")
 	parser.add_argument('--client', action='store_true', help="Add a virtual client interface on the inject interface.")
+	parser.add_argument('--skip-mf', action='store_true', help="Skip injection of frames with More Fragments flag.")
 	options = parser.parse_args()
 
 	if options.active + options.ap + options.client > 1:
@@ -76,7 +77,7 @@ def main():
 
 	# Star the injection tests
 	try:
-		test_injection(options.inject, options.monitor, peermac)
+		test_injection(options.inject, options.monitor, peermac, skip_mf=options.skip_mf)
 	except OSError as ex:
 		log(ERROR, str(ex))
 
