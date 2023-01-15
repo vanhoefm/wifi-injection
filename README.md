@@ -5,7 +5,7 @@
 
 This repository contains a script to test the correctness of Wi-Fi frame injection. Summarized,
 we found that commodity Wi-Fi dongles may improperly inject frames under certain conditions,
-which may interfer with scripts, experiments, or securiy tests. To overcome (some of) these
+which may interfere with scripts, experiments, or securiy tests. To overcome (some of) these
 issues, we updated the Linux kernel and [RadioTap](https://www.radiotap.org/) standard. Our
 updates are part of the Linux kernel since v5.11 and are part of Scapy since v2.4.3.
 
