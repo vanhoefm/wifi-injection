@@ -29,7 +29,7 @@ To test whether frames are properly injected, you can use the script in this rep
 Be sure to also see our notes on the [acknowledgement behavior](#id-acks) of interfaces
 in monitor mode, and how to to inject frames with the [More Fragments (MF) flag](#id-more-fragments).
 
-For further details, see the our paper [**Testing and Improving the Correctness of Wi-Fi Frame Injection**](https://papers.mathyvanhoef.com/wisec2023-injection.pdf).
+For further details, see the our paper [**Testing and Improving the Correctness of Wi-Fi Frame Injection**](https://papers.mathyvanhoef.com/wisec2023-wifi-injection.pdf).
 If you are using our injection and RadioTap improvements, you can use the following BibTex entry
 to cite the paper:
 
@@ -48,7 +48,7 @@ to cite the paper:
 # 2. Common Injection Issues
 
 For details on issues with frame injection on Linux, see the our 6-page paper
-[**Testing and Improving the Correctness of Wi-Fi Frame Injection**](https://papers.mathyvanhoef.com/wisec2023-injection.pdf).
+[**Testing and Improving the Correctness of Wi-Fi Frame Injection**](https://papers.mathyvanhoef.com/wisec2023-wifi-injection.pdf).
 The following is a summary of some practical issues you might encounted when using Wi-Fi
 frame injection to perform experiments. We also discuss some open problems.
 
@@ -175,7 +175,7 @@ the MF flag may not be properly transmitted).
   all. For instance, the `rt2800usb` driver seems unable to inject such frames both in pure
   and mixed monitor mode. Addressing this would required patched driver or firmware code.
 
-- For other examples see [our paper](https://papers.mathyvanhoef.com/wisec2023-injection.pdf).
+- For other examples see [our paper](https://papers.mathyvanhoef.com/wisec2023-wifi-injection.pdf).
 
 
 ## 2.5. Open Problems
