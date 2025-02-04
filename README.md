@@ -124,13 +124,13 @@ on the `ap start` command see the [`start_ap` function in libwifi](https://githu
 <a id="id-more-fragments"></a>
 ## 2.3. More Fragments (MF) flag
 
-Some network cards, such as the the Intel AC-3160 and Alfa AWUS036ACM did not properly
-transmit injected frames with the More Fragments (MF) flag set. This can be solved by,
+Some network cards, such as the the Intel AC-3160 and those based on the RT5572 chipset did not
+properly transmit injected frames with the More Fragments (MF) flag set. This can be solved by,
 after injecting the frame with the MF flag set, immediately injecting a dummy frame
-_witout_ the MF flag. With the AWUS036ACM, this dummy frame must also have the same QoS TID
+_witout_ the MF flag. With the RT5572 chipset, this dummy frame must also have the same QoS TID
 as the injected frame, but all other fields of the dummy frame did not matter.
 
-The above work-around is implemented in our injection tests. In particular, the driver
+The above workaround is implemented in our injection tests. In particular, the driver
 of the network cards is detected, and the dummy frame is injected when needed:
 
 	# Workaround to properly inject fragmented frames (and prevent it from blocking Tx queue).
@@ -187,6 +187,7 @@ Some known injection problems that have not yet been fixed are:
 
 - The `rt2800usb` driver, at least when combined with an RT5572 Wireless Adapter, is unable
   to inject frames that have the "More Fragment" flag set. These frames are silently dropped.
+  In the meantime, this can be solved by the workaround of [injecting a dummy frame afterwards](id-more-fragments).
 
 - The default firmware of `ath9k_htc` network cards will overwrite the sequence and
   fragment number of injected frames, both in pure and mixed monitor mode. Use
@@ -343,3 +344,9 @@ twice: (1) first you see the frame as injected by whatever tool is sending it, a
 slightly differ if the kernel overwrote certain fields. If you only see an injected
 frame once it may have been dropped by the kernel.
 
+
+# 5. Personal Notes
+
+- TODO: Double-check the behaviour of the AWUS036ACM when injecting a frame with the
+  More Fragment (MF) flag set. Earlier, this README said that this dongle had trouble
+  injecting this frame, but the paper mentioned it was the RT5572 chipsets.
