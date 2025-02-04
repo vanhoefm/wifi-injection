@@ -5,7 +5,7 @@
 
 This repository contains a script to test the correctness of Wi-Fi frame injection. Summarized,
 we found that commodity Wi-Fi dongles may improperly inject frames under certain conditions,
-which may interfere with scripts, experiments, or securiy tests. To overcome (some of) these
+which may interfere with scripts, experiments, or security tests. To overcome (some of) these
 issues, we updated the Linux kernel and [RadioTap](https://www.radiotap.org/) standard. Our
 updates are part of the Linux kernel since v5.11 and are part of Scapy since v2.4.3.
 
@@ -18,18 +18,18 @@ updates are part of the Linux kernel since v5.11 and are part of Scapy since v2.
 	dot11 = Dot11(addr1="00:11:22:33:44")/Dot11Deauth(reason=7)
 	sendp(radiotap/dot11)
 
-Notice how the `NOSEQ` and `ORDER` tranmission flag (TXFlags) are set. By setting these
+Notice how the `NOSEQ` and `ORDER` transmission flags (TXFlags) are set. By setting these
 flags, the sequence number of injected frames isn't modified, and injected frames are not
-reordered relative to each other, respectively. Note that these flags are only adhired to
+reordered relative to each other, respectively. Note that these flags are only adhered to
 from Linux kernel 5.11 and above.
 
 Unfortunately, **drivers or network cards may still overwrite fields of injected Wi-Fi frames**.
 To test whether frames are properly injected, you can use the script in this repository.
 
 Be sure to also see our notes on the [acknowledgement behavior](#id-acks) of interfaces
-in monitor mode, and how to to inject frames with the [More Fragments (MF) flag](#id-more-fragments).
+in monitor mode, and how to inject frames with the [More Fragments (MF) flag](#id-more-fragments).
 
-For further details, see the our paper [**Testing and Improving the Correctness of Wi-Fi Frame Injection**](https://papers.mathyvanhoef.com/wisec2023-wifi-injection.pdf).
+For further details, see our paper [**Testing and Improving the Correctness of Wi-Fi Frame Injection**](https://papers.mathyvanhoef.com/wisec2023-wifi-injection.pdf).
 If you are using our injection and RadioTap improvements, you can use the following BibTex entry
 to cite the paper:
 
@@ -47,18 +47,18 @@ to cite the paper:
 <a id="id-intro"></a>
 # 2. Common Injection Issues
 
-For details on issues with frame injection on Linux, see the our 6-page paper
+For details on issues with frame injection on Linux, see our 6-page paper
 [**Testing and Improving the Correctness of Wi-Fi Frame Injection**](https://papers.mathyvanhoef.com/wisec2023-wifi-injection.pdf).
-The following is a summary of some practical issues you might encounted when using Wi-Fi
+The following is a summary of some practical issues you might encounter when using Wi-Fi
 frame injection to perform experiments. We also discuss some open problems.
 
 
 ## 2.1. Pure vs mixed monitor mode
 
 How a network card is configured impacts how frames are injected. For instance, it
-impacts whether the network card will retransmit frames, or wether it will send
-acknowledgements in response to recieved frames. There are two mains ways in which a
-Wi-Fi network interface can be used in practise on Linux: in pure monitor mode or mixed
+impacts whether the network card will retransmit frames, or whether it will send
+acknowledgements in response to received frames. There are two main ways in which a
+Wi-Fi network interface can be used in practice on Linux: in pure monitor mode or mixed
 monitor mode. This difference depends on whether virtual Wi-Fi interfaces or used or not.
 
 What are virtual interfaces? Linux has the ability to use a network card normally, for
@@ -102,9 +102,9 @@ However, at the time of writing, only the `mt76` and `mt7601u` support active mo
 mode. You can see which drivers support active monitor mode by
 [seeing which drivers advertise the `NL80211_FEATURE_ACTIVE_MONITOR` feature](https://elixir.bootlin.com/linux/latest/A/ident/NL80211_FEATURE_ACTIVE_MONITOR).
 
-A second alternative to assure that frames are acknowledge is to mixed monitor mode with
-one virtual interface in client or AP mode and the second interface in monitor mode.
-Ideally a virtual AP interface is used because you can more easily assure it stays on the
+A second alternative to ensure that frames are acknowledged is to use mixed monitor mode with
+one virtual interface in client or AP mode, and the second interface in monitor mode.
+Ideally, a virtual AP interface is used because you can more easily ensure it stays on the
 same channel. You can use the following code for this:
 
 	sudo ifconfig wlan0 down
@@ -114,7 +114,7 @@ same channel. You can use the following code for this:
 	sudo iw wlan0 ap start somessid 2462 10000 1 head 80000000000000000000c4e984dbfb7bc4e984dbfb7b0000000000000000000064000000
 	sudo ifconfig wlan0mon up
 
-In the "ap start" command, replace the two repeating string `c4e984dbfb7b` with the MAC
+In the "ap start" command, replace the two repeating strings `c4e984dbfb7b` with the MAC
 address of the wlan0 interface. In the above case, `wlan0` is put into AP mode so that
 frames towards its MAC address will be acknowledged. The other virtual interface `wlan0mon`
 can then be used to monitor Wi-Fi traffic and to inject Wi-Fi frames. For more information
@@ -127,7 +127,7 @@ on the `ap start` command see the [`start_ap` function in libwifi](https://githu
 Some network cards, such as the the Intel AC-3160 and those based on the RT5572 chipset did not
 properly transmit injected frames with the More Fragments (MF) flag set. This can be solved by,
 after injecting the frame with the MF flag set, immediately injecting a dummy frame
-_witout_ the MF flag. With the RT5572 chipset, this dummy frame must also have the same QoS TID
+_without_ the MF flag. With the RT5572 chipset, this dummy frame must also have the same QoS TID
 as the injected frame, but all other fields of the dummy frame did not matter.
 
 The above workaround is implemented in our injection tests. In particular, the driver
@@ -146,23 +146,23 @@ of the network cards is detected, and the dummy frame is injected when needed:
 	if sout.mf_workaround and toinject.FCfield & Dot11(FCfield="MF").FCfield != 0:
 		fix = Dot11(type=p.type, subtype=p.subtype)
 		# Note: for the RT5572 the workaround is always needed. Additionally, we need to send
-		#       the dummy frame using the same QoS TID. Just use same QoD TID for all devices.
+		#       the dummy frame using the same QoS TID. Just use the same QoD TID for all devices.
 		if Dot11QoS in p:
 			fix = fix/Dot11QoS(TID=p[Dot11QoS].TID)
 		sout.send(RadioTap(present="TXFlags", TXFlags="NOSEQ+ORDER")/fix)
 		log(STATUS, f"Sending dummy frame after injecting frame with MF flag set: {repr(fix)}")
 
 Summarized, when injecting frames with the More Fragments flag, you may have to implement
-a similar workaround where a dummy frame is injected aftwards (otherwise the frame with
+a similar workaround where a dummy frame is injected afterwards (otherwise the frame with
 the MF flag may not be properly transmitted).
 
 
 ## 2.4. Other issues
 
-- The order of injected frames may also be changed in both pure and mixed monitor mode.
+- The order of injected frames may also be changed in both pure and mixed monitor modes.
   In particular, frames with different QoS TID values, i.e., with different priorities,
   may get reordered before they are transmitted. This can be avoided by using the new
-  `ORDER` TXFlag in the RadioTap header, though not all drivers may properly adhire
+  `ORDER` TXFlag in the RadioTap header, though not all drivers may properly adhere
   to this flag.
 
 - The Linux kernel overwrites the sequence number of injected frames in mixed monitor mode.
@@ -173,7 +173,7 @@ the MF flag may not be properly transmitted).
 - We experienced that some network cards are unable to send frames that have the
   "More Fragments" flag set in the Control Field. These frames don't get transmitted at
   all. For instance, the `rt2800usb` driver seems unable to inject such frames both in pure
-  and mixed monitor mode. Addressing this would required patched driver or firmware code.
+  and mixed monitor mode. Addressing this would require patched driver or firmware code.
 
 - For other examples see [our paper](https://papers.mathyvanhoef.com/wisec2023-wifi-injection.pdf).
 
@@ -198,14 +198,14 @@ Some known injection problems that have not yet been fixed are:
   a frame with the More Fragments flag set. This happens in both pure and mixed monitor mode.
 
 - When putting the Intel Tiger Lake PCH CNVi WiFi into pure monitor mode, you have to wait roughly
-  30 seconds before it starts recieving frames. Switching back and forth between mixed managed
+  30 seconds before it starts receiving frames. Switching back and forth between mixed managed
   and pure monitor causes it not to receive frames at all in monitor mode. It cannot inject frames
-  in mixed monitor mode, at least before authentication. In pure monitor mode it was unable to
+  in mixed monitor mode, at least before authentication. In pure monitor mode, it was unable to
   inject EAPOL frames and it overwrites the sequence and fragment number. Do not use this card.
 
 - I haven't experimented with this yet, but it would be interesting to test if a network card
-  in monitor mode might also reorder recieved frames that have a different QoS TID priority.
-  If that would happen, our reorder tests may not be reliable, because it may be the _monitor_
+  in monitor mode might also reorder received frames that have a different QoS TID priority.
+  If that happens, our reorder tests may not be reliable, because it may be the _monitor_
   interface that is reordering frames and not the interface that is _transmitting_ frames!
 
 
@@ -237,13 +237,13 @@ be loaded. Pull in new code using:
 # 4. Testing Injection
 
 You should [disable Wi-Fi in your network manager](https://github.com/vanhoefm/libwifi/blob/master/docs/linux_tutorial.md#id-disable-wifi)
-so it will not interfere with the test tool. On Ubuntu you can do this using `nmcli radio wifi off`.
-Otherwise the network manager of Ubuntu will interfere with the test tool.
+so it will not interfere with the test tool. On Ubuntu, you can do this using `nmcli radio wifi off`.
+Otherwise, the network manager of Ubuntu will interfere with the test tool.
 
-We also recommend to unplug and then plug the Wi-Fi dongle back in before running the
-injection tests. Other tools might have created virtual interface that could infere
-with the injection tests, and unplugging the dongle with remove them. If you are testing
-the build-in network card of your computer, consider first rebooting.
+We also recommend unplugging and then plugging the Wi-Fi dongle back in before running the
+injection tests. Other tools might have created a virtual interface that could interfere
+with the injection tests, and unplugging the dongle will remove these virtual interfaces.
+If you are testing the built-in network card of your computer, consider first rebooting.
 
 The basic execution of the test tool is as follows:
 
@@ -264,7 +264,7 @@ network card itself. You can perform a self-test as follows:
 	./test-injection.py wlan0
 
 If you have a second network card, that can be used to monitor the _actual_ transmission
-of frames. It's strongly recommend to test frame injection with a second network card.
+of frames. It's strongly recommended to test frame injection with a second network card.
 You can execute such a test as follows:
 
 	./test-injection.py wlan0 wlan1
@@ -272,7 +272,7 @@ You can execute such a test as follows:
 Here `wlan0` will be used to inject frames and `wlan1` will be used to see whether
 injected frames are being properly transmitted by `wlan0`.
 
-By default the script will use channel 1 for the tests. If you want to use a different
+By default, the script will use channel 1 for the tests. If you want to use a different
 channel you can use:
 
 	./test-injection.py wlan0 wlan1 --channel 11
@@ -285,7 +285,7 @@ are actively used, the only alternative is to run the test multiple times.
 ## 4.2. Active pure monitor mode
 
 By default pure monitor mode injection will be tested. You can also test whether the
-network cards supports active pure monitor mode, in which case it should acknowledge
+network card supports active pure monitor mode, in which case it should acknowledge
 frames sent towards it. You can test active pure monitor mode injection as follows:
 
 	./test-injection.py wlan0 [wlan1] --active [--channel 11]
@@ -299,7 +299,7 @@ can execute one of the following two commands:
 	./test-injection.py wlan0 [wlan1] --ap [--channel 11]
 	./test-injection.py wlan0 [wlan1] --client [--channel 11]
 
-The first commend test the case where `wlan0` operates in client (managed) mode
+The first command tests the case where `wlan0` operates in client (managed) mode
 and frames are injected using the (newly created) `wlan0mon` monitor interface.
 The second command is similar but puts the `wlan0` interface in AP mode.
 
@@ -335,7 +335,7 @@ running the tests on a different channel as well.
 
 ## 4.6. Manual testing notes
 
-When using wireshark to inspect the injection behaviour of a device it is recommended
+When using Wireshark to inspect the injection behaviour of a device it is recommended
 to use a second device in pure monitor mode to see how frames are being transmitted.
 
 In case you open the interface used to inject frames then you will see injected frames
