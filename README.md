@@ -170,11 +170,6 @@ the MF flag may not be properly transmitted).
   overwrite the sequence or fragment number in their driver or firmware code. To remedy
   that you would need patched driver or firmware code.
 
-- We experienced that some network cards are unable to send frames that have the
-  "More Fragments" flag set in the Control Field. These frames don't get transmitted at
-  all. For instance, the `rt2800usb` driver seems unable to inject such frames both in pure
-  and mixed monitor mode. Addressing this would require patched driver or firmware code.
-
 - For other examples see [our paper](https://papers.mathyvanhoef.com/wisec2023-wifi-injection.pdf).
 
 
