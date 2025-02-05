@@ -84,9 +84,9 @@ in client or access point mode (or any other non-monitor mode).
 
 **Acknowledgements in pure monitor mode**: most network cards will not acknowledge frames
 when used in pure monitor mode. This can be problematic in certain experiments. For
-instance, the Hostapd daemon on Linux to start an Access Point (AP) requires that the
-association response is acknowledged. If the association response is not acknowledged,
-Hostapd will disconnect the client from the AP. Since it's impossible to send
+instance, the Hostapd daemon on Linux, which implements Access Point (AP) functionality,
+requires that the association response is acknowledged. If the association response is not
+acknowledged, Hostapd will disconnect the client from the AP. Since it's impossible to send
 acknowledgement frames fast enough in user space, this makes it impossible to test
 Hostapd on Linux when manually implementing the association procedure in user space.
 
@@ -120,6 +120,11 @@ frames towards its MAC address will be acknowledged. The other virtual interface
 can then be used to monitor Wi-Fi traffic and to inject Wi-Fi frames. For more information
 on the `ap start` command see the [`start_ap` function in libwifi](https://github.com/vanhoefm/libwifi/blob/master/wifi.py).
 
+A last alternative is to use a Wi-Fi dongle that always actively acknowledges frames, even
+when it doesn't implement the above _active monitor mode_. From my experience, this is
+often the case with Atheros/Qualcomm dongles, e.g., dongles that use the driver `ath9k_htc`.
+See also the [`ath_masker` project](https://github.com/vanhoefm/ath_masker) to even acknowledge
+MAC addresses that are spoofed.
 
 <a id="id-more-fragments"></a>
 ## 2.3. More Fragments (MF) flag
