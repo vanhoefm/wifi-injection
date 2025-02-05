@@ -124,7 +124,9 @@ A last alternative is to use a Wi-Fi dongle that always actively acknowledges fr
 when it doesn't implement the above _active monitor mode_. From my experience, this is
 often the case with Atheros/Qualcomm dongles, e.g., dongles that use the driver `ath9k_htc`.
 See also the [`ath_masker` project](https://github.com/vanhoefm/ath_masker) to even acknowledge
-MAC addresses that are spoofed.
+MAC addresses that are spoofed, where further background on the mechanisms that this is based
+on is explained in [Unmasking a Spoofed MAC Address (CVE-2013-4579)](https://www.mathyvanhoef.com/2013/11/unmasking-spoofed-mac-address.html)
+
 
 <a id="id-more-fragments"></a>
 ## 2.3. More Fragments (MF) flag
