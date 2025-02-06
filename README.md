@@ -352,3 +352,7 @@ frame once it may have been dropped by the kernel.
 - TODO: Double-check the behaviour of the AWUS036ACM when injecting a frame with the
   More Fragment (MF) flag set. Earlier, this README said that this dongle had trouble
   injecting this frame, but the paper mentioned it was the RT5572 chipsets.
+- Note that the nl80211 command `NL80211_CMD_FRAME` only sends management frames.
+  To inject any frame toghether with a preceeding Radiotap header, the Linux function
+  `ieee80211_monitor_start_xmit` is used, which is only called for an interface that
+  is in monitor mode. TODO: Further confirm this.
