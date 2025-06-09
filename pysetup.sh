@@ -11,5 +11,11 @@ rm -rf venv/
 python3 -m venv venv
 source venv/bin/activate
 pip install wheel
+
+# In case the user forgot to recursively clone
+git submodule init
+git submodule update
+
+# Install requirements of libwifi
 pip install -r libwifi/requirements.txt
 
